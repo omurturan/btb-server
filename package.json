@@ -1,0 +1,28 @@
+{
+  "name": "btb-server",
+  "version": "0.1.2",
+  "description": "Server side for BTB mobile apps",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "pg": "4.x",
+    "express": "~4.9.x",
+    "body-parser": "*",
+    "winston": "*"
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heroku/node-js-getting-started"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT"
+}
