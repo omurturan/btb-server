@@ -211,7 +211,7 @@ app.get('/getLeaderboard', function (request, response ) {
                                 .field('count(*)', 'totalVote')
                                 .field('count(likeCount.id)', 'likeCount')
                                 .field('count(dislikeCount.id)', 'dislikeCount')
-                                .field('(likeCount/totalVote)', 'score')
+                                .field('((count(likeCount.id)/count(*))', 'score')
                             .from('vote')
                             .left_join(
                                 squel.select()
@@ -244,7 +244,7 @@ app.get('/getLeaderboard', function (request, response ) {
                             .group('client.surname')
                             .group('vote.imageid')
                             .group('image.name')
-                            .order('order, false)
+                            .order('score', false)
                             .limit(5);
 
 
