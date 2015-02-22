@@ -202,7 +202,7 @@ app.get('/getLeaderboard', function (request, response ) {
     
     pg.connect(DATABASE_URL, function (err, client, done) {
 
-        var queryString = squel.select()
+        var queryString = squel.select({ autoQuoteAliasNames: false })
                             .from(
                                 squel.select({ autoQuoteAliasNames: false })
                                     .field('client.id', 'ownerId')
