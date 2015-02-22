@@ -243,7 +243,7 @@ app.get('/getLeaderboard', function (request, response ) {
                             .group('client.surname')
                             .group('vote.imageid')
                             .group('image.name')
-                            .order('likeCount', false)
+                            .order('likeCount/totalVote', false)
                             .limit(5);
 
 
