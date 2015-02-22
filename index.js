@@ -90,7 +90,7 @@ app.get('/getNextImage/:userId', function (request, response) {
     var userId = 1;
 
     if (request.params.userId && !isNaN(parseInt(request.params.userId, 10))) {
-        userId = parseInt(request.params.userId, 10);
+        userId = request.params.userId;
     } else {
         response.status(500);
         response.setHeader('Content-Type', 'application/json');
@@ -283,8 +283,8 @@ app.post('/vote', function (request, response){
     var vote = -1;
     var errorMessage = "";
 
-    if (request.body.userId && !isNaN(parseInt(request.body.userId, 10)) ) {
-        userId = parseInt(request.body.userId, 10);
+    if (request.body.userId && !isNaN(Number(request.body.userId)) ) {
+        userId = request.body.userId;
     } else {
         errorMessage += "user id ";
     }
