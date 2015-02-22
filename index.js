@@ -202,50 +202,56 @@ app.get('/getLeaderboard', function (request, response ) {
     
     pg.connect(DATABASE_URL, function (err, client, done) {
 
-        var queryString = squel.select({ autoQuoteAliasNames: false })
-                                .field('client.id', 'ownerId')
-                                .field('client.name', 'ownerName')
-                                .field('client.surname', 'ownerSurname')
-                                .field('vote.imageid')
-                                .field('image.name', 'imagename')
-                                .field('count(*)', 'totalVote')
-                                .field('count(likeCount.id)', 'likeCount')
-                                .field('count(dislikeCount.id)', 'dislikeCount')
-                                .field('likeCount/totalVote', 'score')
-                            .from('vote')
-                            .left_join(
-                                squel.select()
-                                    .field('id')
-                                    .from('vote')
-                                    .where('votevalue = 0'),
-                                'dislikeCount',
-                                'dislikeCount.id = vote.id'
+        var queryString = squel.select()
+                            .from(
+                                squel.select({ autoQuoteAliasNames: false })
+                                    .field('client.id', 'ownerId')
+                                    .field('client.name', 'ownerName')
+                                    .field('client.surname', 'ownerSurname')
+                                    .field('vote.imageid')
+                                    .field('image.name', 'imagename')
+                                    .field('count(*)', 'totalVote')
+                                    .field('count(likeCount.id)', 'likeCount')
+                                    .field('count(dislikeCount.id)', 'dislikeCount')
+                                .from('vote')
+                                .left_join(
+                                    squel.select()
+                                        .field('id')
+                                        .from('vote')
+                                        .where('votevalue = 0'),
+                                    'dislikeCount',
+                                    'dislikeCount.id = vote.id'
+                                )
+                                .left_join(
+                                    squel.select()
+                                        .field('id')
+                                        .from('vote')
+                                        .where('votevalue = 1'),
+                                    'likeCount',
+                                    'likeCount.id = vote.id'
+                                )
+                                .join(
+                                    'image',
+                                    null,
+                                    'image.id = vote.imageid'
+                                )
+                                .join(
+                                    'client',
+                                    null,
+                                    'client.id = image.userid'
+                                )
+                                .group('client.id')
+                                .group('client.name')
+                                .group('client.surname')
+                                .group('vote.imageid')
+                                .group('image.name')
+                                .order('likeCount', false)
+                                .limit(5),
+                                'derivedTable'
                             )
-                            .left_join(
-                                squel.select()
-                                    .field('id')
-                                    .from('vote')
-                                    .where('votevalue = 1'),
-                                'likeCount',
-                                'likeCount.id = vote.id'
-                            )
-                            .join(
-                                'image',
-                                null,
-                                'image.id = vote.imageid'
-                            )
-                            .join(
-                                'client',
-                                null,
-                                'client.id = image.userid'
-                            )
-                            .group('client.id')
-                            .group('client.name')
-                            .group('client.surname')
-                            .group('vote.imageid')
-                            .group('image.name')
-                            .order('likeCount', false)
-                            .limit(5);
+                            .field('derivedTable.*')
+                            .field('derivedTable.likeCount/derivedTable.totalVote', 'score')
+
 
 
         logger.log('debug', queryString.toString());
