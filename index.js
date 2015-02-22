@@ -248,7 +248,7 @@ app.get('/getLeaderboard', function (request, response ) {
                             .limit(5);
 
 
-        //logger.log('info', queryString.toString());
+        logger.log('debug', queryString.toString());
 
         client.query(queryString.toString(), function (err, result) {
             done();
