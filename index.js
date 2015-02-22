@@ -211,7 +211,7 @@ app.get('/getLeaderboard', function (request, response ) {
                                 .field('count(*)', 'totalVote')
                                 .field('count(likeCount.id)', 'likeCount')
                                 .field('count(dislikeCount.id)', 'dislikeCount')
-                                //.field('((count(likeCount.id)/count(*))', 'score')
+                                .field('((count(likeCount.id)/count(*))', 'score')
                             .from('vote')
                             .left_join(
                                 squel.select()
