@@ -245,12 +245,12 @@ app.get('/getLeaderboard', function (request, response ) {
                                 .group('client.surname')
                                 .group('vote.imageid')
                                 .group('image.name')
-                                .order('likeCount', false)
                                 .limit(5),
                                 'derivedTable'
                             )
                             .field('derivedTable.*')
-                            .field('derivedTable.likeCount/derivedTable.totalVote', 'score')
+                            .field('(derivedTable.likeCount * 100.0)/derivedTable.totalVote', 'score')
+                            .order('score', false)
 
 
 
