@@ -6,6 +6,7 @@ var bodyParser  = require('body-parser');
 var util        = require('util');
 var winston     = require('winston');
 var squel       = require("squel");
+var CronJob     = require('cron').CronJob;
 
 squel.useFlavour('postgres');
 
@@ -16,6 +17,92 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
+
+
+new CronJob('* */5 * * * *', function(){
+
+    var subquery =  squel.select({ autoQuoteAliasNames: false })
+                            .from(
+                                squel.select({ autoQuoteAliasNames: false })
+                                    .field('vote.imageid')
+                                    .field('image.name', 'imagename')
+                                    .field('client.id', 'ownerId')
+                                    .field('client.name', 'ownerName')
+                                    .field('client.surname', 'ownerSurname')
+                                    .field('count(likeCount.id)', 'likeCount')
+                                    .field('count(dislikeCount.id)', 'dislikeCount')
+                                    .field('count(*)', 'totalVote')
+                                .from('vote')
+                                .left_join(
+                                    squel.select()
+                                        .field('id')
+                                        .from('vote')
+                                        .where('votevalue = 0'),
+                                    'dislikeCount',
+                                    'dislikeCount.id = vote.id'
+                                )
+                                .left_join(
+                                    squel.select()
+                                        .field('id')
+                                        .from('vote')
+                                        .where('votevalue = 1'),
+                                    'likeCount',
+                                    'likeCount.id = vote.id'
+                                )
+                                .join(
+                                    'image',
+                                    null,
+                                    'image.id = vote.imageid'
+                                )
+                                .join(
+                                    'client',
+                                    null,
+                                    'client.id = image.userid'
+                                )
+                                .group('client.id')
+                                .group('client.name')
+                                .group('client.surname')
+                                .group('vote.imageid')
+                                .group('image.name')
+                                .limit(5),
+                                'derivedTable'
+                            )
+                            .field('derivedTable.*')
+                            .field('(derivedTable.likeCount * 100.0)/derivedTable.totalVote', 'score')
+                            .order('score', false)
+                        ;
+
+    var finalQueryString = 'insert into leaderboard (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score) ' + subquery.toString();
+    
+
+    pg.connect(DATABASE_URL, function (err, client, done) {
+
+        client.query('delete from leaderboard', function (err, result) {
+            done();
+            if (err) {
+                console.error(err);
+                logger.log('error', 'Database Error on cronjob leaderboard');
+                logger.log('error', err);
+                return;
+            };
+
+            client.query(finalQueryString, function (err, result) {
+                done();
+                if (err) {
+                    console.error(err);
+                    logger.log('error', 'Database Error on cronjob leaderboard');
+                    logger.log('error', err);
+                    return;
+                }
+
+                logger.log('info', 'leaderboard updated');
+
+            });
+
+        }); 
+
+    });
+}, null, true, "America/Los_Angeles", this);
 
 
 var logger = new (winston.Logger)({
@@ -203,56 +290,9 @@ app.get('/getLeaderboard', function (request, response ) {
     pg.connect(DATABASE_URL, function (err, client, done) {
 
         var queryString = squel.select({ autoQuoteAliasNames: false })
-                            .from(
-                                squel.select({ autoQuoteAliasNames: false })
-                                    .field('client.id', 'ownerId')
-                                    .field('client.name', 'ownerName')
-                                    .field('client.surname', 'ownerSurname')
-                                    .field('vote.imageid')
-                                    .field('image.name', 'imagename')
-                                    .field('count(*)', 'totalVote')
-                                    .field('count(likeCount.id)', 'likeCount')
-                                    .field('count(dislikeCount.id)', 'dislikeCount')
-                                .from('vote')
-                                .left_join(
-                                    squel.select()
-                                        .field('id')
-                                        .from('vote')
-                                        .where('votevalue = 0'),
-                                    'dislikeCount',
-                                    'dislikeCount.id = vote.id'
-                                )
-                                .left_join(
-                                    squel.select()
-                                        .field('id')
-                                        .from('vote')
-                                        .where('votevalue = 1'),
-                                    'likeCount',
-                                    'likeCount.id = vote.id'
-                                )
-                                .join(
-                                    'image',
-                                    null,
-                                    'image.id = vote.imageid'
-                                )
-                                .join(
-                                    'client',
-                                    null,
-                                    'client.id = image.userid'
-                                )
-                                .group('client.id')
-                                .group('client.name')
-                                .group('client.surname')
-                                .group('vote.imageid')
-                                .group('image.name')
-                                .limit(5),
-                                'derivedTable'
-                            )
-                            .field('derivedTable.*')
-                            .field('(derivedTable.likeCount * 100.0)/derivedTable.totalVote', 'score')
+                            .from('leaderboard')
+                            .field('*')
                             .order('score', false)
-
-
 
         logger.log('debug', queryString.toString());
 
