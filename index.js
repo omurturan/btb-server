@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 
-new CronJob('* */5 * * * *', function(){
+new CronJob('0 */5 * * * *', function(){
 
     var subquery =  squel.select({ autoQuoteAliasNames: false })
                             .from(
