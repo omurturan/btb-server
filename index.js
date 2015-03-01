@@ -236,6 +236,7 @@ app.get('/getNextImage/:userId', function (request, response) {
             var rand = Math.floor(Math.random() * numberOfPictures);
             var imageName = result.rows[rand].name;
             var imageId = result.rows[rand].id;
+            var description = result.rows[rand].description;
             var imageUrl = "http://81.4.102.107:5000/" + imageName;
 
 
@@ -245,7 +246,8 @@ app.get('/getNextImage/:userId', function (request, response) {
                             .stringify({
                                         "imageId" : imageId,
                                         "imageName" : imageName,
-                                        "imageUrl" : imageUrl
+                                        "imageUrl" : imageUrl,
+                                        "description" : description
                                         }));
             return;
             
@@ -397,6 +399,7 @@ app.post('/uploadImage', function (request, response) {
     
     var userId = -1;
     var imageEncodedString = "";
+    var imageDesc;
         
     if (body.userId && !isNaN(parseInt(body.userId, 10)) ) {
         userId = body.userId;
@@ -406,6 +409,10 @@ app.post('/uploadImage', function (request, response) {
         response.end(JSON.stringify({"Error message" : "Invalid userId"}));
         logger.log('error', 'Invalid user id on method ' + request.originalUrl);
         return;
+    }
+
+    if (body.imageDesc) {
+        imageDesc = body.imageDesc;
     }
 
     if (body.encodedImage) {
@@ -432,11 +439,10 @@ app.post('/uploadImage', function (request, response) {
                                     .into('image')
                                     .set('userid', userId)
                                     .set('name', fileName);
-/*
 
-                'INSERT INTO ' + 
-                    'image (userid, name) ' + 
-                    'VALUES (' + userId +', \'' + fileName + '\')';*/
+            if (imageDesc) {
+                insertImageQuery.set('description', imageDesc);
+            }
 
             logger.log('info', insertImageQuery.toString());
 
