@@ -376,6 +376,7 @@ app.post('/vote', function (request, response){
                     response.setHeader('Content-Type', 'application/json');
                     response.end(JSON.stringify({"Error message" : error}));
                     logger.log('error', 'Database Error on ' + request.originalUrl);
+                    logger.log('error', 'userId: ' + userId);
                     logger.log('error', error);
                     return;
                 } else {
