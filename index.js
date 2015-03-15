@@ -63,12 +63,12 @@ new CronJob('0 */10 * * * *', function(){
                                 .group('client.name')
                                 .group('client.surname')
                                 .group('vote.imageid')
-                                .group('image.name')
-                                .limit(5),
+                                .group('image.name'),
                                 'derivedTable'
                             )
                             .field('derivedTable.*')
                             .field('(derivedTable.likeCount * 100.0)/derivedTable.totalVote', 'score')
+                            .limit(5)
                             .order('score', false)
                         ;
 
