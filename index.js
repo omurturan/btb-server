@@ -294,6 +294,7 @@ app.get('/getLeaderboard', function (request, response ) {
         var queryString = squel.select({ autoQuoteAliasNames: false })
                             .from('leaderboard')
                             .field('*')
+                            .where('score > 0')
                             .order('score', false)
 
         logger.log('debug', queryString.toString());
