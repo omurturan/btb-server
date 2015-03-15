@@ -67,7 +67,7 @@ new CronJob('0 */10 * * * *', function(){
                                 'derivedTable'
                             )
                             .field('derivedTable.*')
-                            .field('(derivedTable.likeCount * 100.0)/derivedTable.totalVote', 'score')
+                            .field('(derivedTable.likeCount * 1300.0)/derivedTable.totalVote + derivedTable.totalVote', 'score')
                             .limit(5)
                             .order('score', false)
                         ;
