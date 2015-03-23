@@ -545,11 +545,15 @@ app.post('/signUp', function (request, response) {
                                                 .set('name', name)
                                                 .set('surname', surname)
                                                 //.set('gender', gender)
-                                                .set('email', email)
+                                                //.set('email', email)
                                                 .returning('id');
 
                     if (email) {
                         insertNewUserQuery.set('email', email);
+                    };
+
+                    if (gender) {
+                        insertNewUserQuery.set('gender', gender);
                     };
 
                     logger.log('info', insertNewUserQuery.toString());
