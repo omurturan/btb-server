@@ -52,7 +52,9 @@ new CronJob('0 */10 * * * *', function(){
                                 .join(
                                     'image',
                                     null,
-                                    'image.id = vote.imageid'
+                                    squel.expr()
+                                        .and('image.id = vote.imageid')
+                                        .and('submittedon > current_date - interval \'30days\'')
                                 )
                                 .join(
                                     'client',
