@@ -11,7 +11,8 @@
     "express": "~4.9.x",
     "body-parser": "*",
     "winston": "*",
-    "cron": "*"
+    "cron": "*",
+    "squel": "*"
   },
   "engines": {
     "node": "0.10.x"
@@ -22,7 +23,6 @@
   },
   "keywords": [
     "node",
-    "heroku",
     "express"
   ],
   "license": "MIT"

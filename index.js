@@ -70,11 +70,12 @@ new CronJob('0 */10 * * * *', function(){
                             )
                             .field('derivedTable.*')
                             .field('(derivedTable.likeCount * 1300.0)/derivedTable.totalVote + derivedTable.totalVote * 10', 'score')
+                            .field('derivedTable.ownername || \' \' || substring(derivedTable.ownersurname from 1 for 1) || \'.\'', 'displayname')
                             .limit(5)
                             .order('score', false)
                         ;
 
-    var finalQueryString = 'insert into leaderboard (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score) ' + subquery.toString();
+    var finalQueryString = 'insert into leaderboard (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score, displayname) ' + subquery.toString();
     
 
     pg.connect(DATABASE_URL, function (err, client, done) {
@@ -319,6 +320,85 @@ app.get('/getLeaderboard', function (request, response ) {
 });
 
 
+app.get('/calculateLeader', function (request, response ) {
+
+    logger.log('debug', request.originalUrl);
+
+    var queryString = 'INSERT INTO leader ' + 
+                        '(leaderid, name, surname, displayname, imageid, imagename, score, likecount, dislikecount, totalvote) ' + 
+                        squel.select({ autoQuoteAliasNames: false })
+                            .from('leaderboard')
+                            .field('ownerid')
+                            .field('ownername')
+                            .field('ownersurname')
+                            .field('displayname')
+                            .field('imageid')
+                            .field('imagename')
+                            .field('score')
+                            .field('likecount')
+                            .field('dislikecount')
+                            .field('totalvote')
+                            .order('score', false)
+                            .limit(1)
+                            .toString();
+
+    logger.log('debug', queryString);
+
+    pg.connect(DATABASE_URL, function (err, client, done) {
+    
+        client.query(queryString, function (error, result) {
+            done();
+            if (error) {
+                console.error(error);
+                response.status(400);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"Error message" : error}));
+                logger.log('error', 'Database Error on ' + request.originalUrl);
+                logger.log('error', 'userId: ' + userId);
+                logger.log('error', error);
+                return;
+            } else {
+                response.status(200);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"message" : "Leader calculated"}));
+                return;
+            }
+        });
+    });
+
+
+});
+
+app.get('/getLastLeader', function (request, response ) {
+
+    logger.log('debug', request.originalUrl);
+    
+    pg.connect(DATABASE_URL, function (err, client, done) {
+
+        var queryString = squel.select({ autoQuoteAliasNames: false })
+                            .from('leader')
+                            .field('*')
+                            .order('insertedon', false)
+                            .limit(1);
+
+        logger.log('debug', queryString.toString());
+
+        client.query(queryString.toString(), function (err, result) {
+            done();
+            if (err) {
+                console.error(err);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"Error message" : err}));
+                logger.log('error', 'Database Error on ' + request.originalUrl);
+                logger.log('error', err);
+            } else {
+                response.setHeader('Content-Type', 'application/json');
+                response.send(result.rows[0]);
+            }
+        });
+    });
+
+});
 app.post('/vote', function (request, response){
 
     logger.log('debug', request.originalUrl);
@@ -429,7 +509,7 @@ app.post('/uploadImage', function (request, response) {
         return;
     }
 
-    var fileName = userId + "_" + Date.now() + ".jpeg";
+    var fileName = Date.now() + "_" + userId + ".jpeg";
 
 
     try {
