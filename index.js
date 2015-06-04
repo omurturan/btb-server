@@ -437,6 +437,8 @@ app.get('/getLastLeader', function (request, response ) {
     pg.connect(DATABASE_URL, function (err, client, done) {
 
         var queryString = squel.select({ autoQuoteAliasNames: false })
+                            .field('leader.*')
+                            .field('leader.ownername || \' \' || substring(leader.ownersurname from 1 for 1) || \'.\'', 'displayname')
                             .from('leader')
                             .field('*')
                             .order('insertedon', false)
