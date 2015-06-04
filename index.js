@@ -387,13 +387,12 @@ app.get('/calculateLeader', function (request, response ) {
     logger.log('debug', request.originalUrl);
 
     var queryString = 'INSERT INTO leader ' + 
-                        '(leaderid, name, surname, displayname, imageid, imagename, score, likecount, dislikecount, totalvote) ' + 
+                        '(leaderid, name, surname, imageid, imagename, score, likecount, dislikecount, totalvote) ' + 
                         squel.select({ autoQuoteAliasNames: false })
                             .from('leaderboard')
                             .field('ownerid')
                             .field('ownername')
                             .field('ownersurname')
-                            .field('displayname')
                             .field('imageid')
                             .field('imagename')
                             .field('score')
