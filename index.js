@@ -69,36 +69,97 @@ new CronJob('0 */10 * * * *', function(){
                                 'derivedTable'
                             )
                             .field('derivedTable.*')
-                            .field('(derivedTable.likeCount * 1300.0)/derivedTable.totalVote + derivedTable.totalVote * 10', 'score')
-                            .field('derivedTable.ownername || \' \' || substring(derivedTable.ownersurname from 1 for 1) || \'.\'', 'displayname')
-                            .limit(5)
+                            .field('(derivedTable.likeCount * 1300.0)/derivedTable.totalVote + derivedTable.totalVote * 20', 'score')
                             .order('score', false)
                         ;
 
-    var finalQueryString = 'insert into leaderboard (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score, displayname) ' + subquery.toString();
+    var finalQueryString = 'insert into leaguetable (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score) ' + subquery.toString();
     
 
     pg.connect(DATABASE_URL, function (err, client, done) {
 
-        client.query('delete from leaderboard', function (err, result) {
+        // first clear the leaguetable table;
+        client.query('delete from leaguetable', function (err, result) {
+
             done();
             if (err) {
                 console.error(err);
-                logger.log('error', 'Database Error on cronjob leaderboard');
+                logger.log('error', 'Database Error on cronjob leaguetable');
                 logger.log('error', err);
                 return;
             };
 
+            logger.log('info', 'leaguetable deleted');
+
+
+            // then insert the new scores
             client.query(finalQueryString, function (err, result) {
                 done();
                 if (err) {
                     console.error(err);
-                    logger.log('error', 'Database Error on cronjob leaderboard');
+                    logger.log('error', 'Database Error on cronjob leaguetable');
                     logger.log('error', err);
                     return;
                 }
 
-                logger.log('info', 'leaderboard updated');
+                logger.log('info', 'leaguetable updated');
+
+
+                // lastly, update the leader board
+                var calculateLeadersQuery = squel.select({ autoQuoteAliasNames: false })
+                                .field('leaguetable.imageid')
+                                .field('leaguetable.imagename')
+                                .field('leaguetable.ownerid')
+                                .field('leaguetable.ownername')
+                                .field('leaguetable.ownersurname')
+                                .field('leaguetable.likecount')
+                                .field('leaguetable.dislikecount')
+                                .field('leaguetable.totalvote')
+                                .field('leaguetable.score')
+                                .from('leaguetable')
+                                .join(
+                                    squel.select()
+                                        .field('leaguetable.ownerid')
+                                        .field('max(leaguetable.score)', 'maxscore')
+                                        .from('leaguetable')
+                                        .group('leaguetable.ownerid'),
+                                    'distinctuser',
+                                    squel.expr()
+                                        .and('leaguetable.ownerid = distinctuser.ownerid')
+                                        .and('leaguetable.score = distinctuser.maxscore')
+                                )
+                                .limit(5)
+                                .order('score', false)
+                                ;
+
+
+                client.query('delete from leaderboard', function (err, result) {
+                    done();
+                    if (err) {
+                        console.error(err);
+                        logger.log('error', 'Database Error on cronjob leaderboard');
+                        logger.log('error', err);
+                        return;
+                    }
+
+                    logger.log('info', 'leaderboard deleted');
+
+                    calculateLeadersQuery = 'insert into leaderboard (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score) ' + calculateLeadersQuery.toString();
+
+                    client.query(calculateLeadersQuery, function (err, result) {
+                        done();
+                        if (err) {
+                            console.error(err);
+                            logger.log('error', 'Database Error on cronjob leaderboard');
+                            logger.log('error', err);
+                            return;
+                        }
+
+                        logger.log('info', 'leaderboard updated');
+
+                    });   
+
+                });     
 
             });
 
@@ -296,7 +357,8 @@ app.get('/getLeaderboard', function (request, response ) {
 
         var queryString = squel.select({ autoQuoteAliasNames: false })
                             .from('leaderboard')
-                            .field('*')
+                            .field('leaderboard.*')
+                            .field('leaderboard.ownername || \' \' || substring(leaderboard.ownersurname from 1 for 1) || \'.\'', 'displayname')
                             .where('score > 0')
                             .order('score', false)
 
