@@ -438,7 +438,7 @@ app.get('/getLastLeader', function (request, response ) {
 
         var queryString = squel.select({ autoQuoteAliasNames: false })
                             .field('leader.*')
-                            .field('leader.ownername || \' \' || substring(leader.ownersurname from 1 for 1) || \'.\'', 'displayname')
+                            .field('leader.name || \' \' || substring(leader.surname from 1 for 1) || \'.\'', 'displayname')
                             .from('leader')
                             .field('*')
                             .order('insertedon', false)
