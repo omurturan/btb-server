@@ -69,7 +69,7 @@ new CronJob('0 */10 * * * *', function(){
                                 'derivedTable'
                             )
                             .field('derivedTable.*')
-                            .field('(derivedTable.likeCount * 1300.0)/derivedTable.totalVote + derivedTable.totalVote * 20', 'score')
+                            .field('round((derivedTable.likeCount * 1300.0)/derivedTable.totalVote + derivedTable.totalVote * 20)', 'score')
                             .order('score', false)
                         ;
 
