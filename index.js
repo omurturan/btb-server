@@ -348,6 +348,102 @@ app.get('/getClients', function (request, response) {
 
 });
 
+app.post('/getUser', function (request, response) {
+
+    logger.log('debug', request.originalUrl);
+
+    var userId = -1;
+
+    var userJSON;
+
+    if (request.body.userId && !isNaN(parseInt(request.body.userId, 10)) ) {
+        userId = request.body.userId;
+    } else {
+        response.status(400);
+        response.setHeader('Content-Type', 'application/json');
+        response.end(JSON.stringify({"Error message" : "Invalid userId"}));
+        logger.log('error', 'Invalid user id on ' + request.originalUrl);
+        return;
+    }
+
+    
+    pg.connect(DATABASE_URL, function (err, client, done) {
+
+        var getUserQueryString = squel.select({ autoQuoteAliasNames: false })
+                            .field("client.name")
+                            .field("client.surname")
+                            .field("client.email")
+                            .field("client.registeredon")
+                            .from("client")
+                            .where("client.id = " + userId);
+
+        
+        // get the user info
+        client.query(getUserQueryString.toString(), function (err, result) {
+            done();
+            if (err) {
+                console.error(err);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"Error message" : err}));
+                logger.log('error', 'Database Error getting the user on ' + request.originalUrl);
+                logger.log('error', err);
+                return;
+            } else {
+
+                var userCount = result.rows.length;
+
+                if (userCount === 0) {
+                    response.setHeader('Content-Type', 'application/json');
+                    response.end(JSON.stringify({"Error message" : "No such user"}));
+                    logger.log('error', '' + userId + ' is not found on ' + request.originalUrl);
+                    return;
+                }
+
+                userJSON = result.rows[0];
+            }
+        });
+
+
+        // get the user pics
+        var getImagesForUserString = squel.select({ autoQuoteAliasNames: false })
+                            .field("image.name")
+                            .field("leaguetable.likecount")
+                            .field("leaguetable.dislikecount")
+                            .field("leaguetable.totalvote")
+                            .field("leaguetable.score")
+                            .from("image")
+                            .left_join(
+                                "leaguetable",
+                                null,
+                                "leaguetable.imageid = image.id"
+                            )
+                            .where("image.userid = " + userId)
+                            .order("submittedon", false);
+
+
+        client.query(getImagesForUserString.toString(), function (err, result) {
+            done();
+            if (err) {
+                console.error(err);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"Error message" : err}));
+                logger.log('error', 'Database Error getting the user on ' + request.originalUrl);
+                logger.log('error', err);
+                return;
+            } else {
+
+                userJSON['images'] = result.rows;                
+                
+                response.setHeader('Content-Type', 'application/json');
+                response.send(userJSON);
+            }
+        });
+
+    });
+
+});
+
+
 
 app.get('/getLeaderboard', function (request, response ) {
 
