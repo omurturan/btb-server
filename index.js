@@ -54,7 +54,7 @@ new CronJob('0 */10 * * * *', function(){
                                     null,
                                     squel.expr()
                                         .and('image.id = vote.imageid')
-                                        .and('submittedon > current_date - interval \'30days\'')
+                                        //.and('submittedon > current_date - interval \'30days\'')
                                 )
                                 .join(
                                     'client',
@@ -265,12 +265,6 @@ app.get('/getNextImage/:userId', function (request, response) {
                             .where("v.imageid IS NULL")
                             .where("image.userid != " + userId);
 
-/*
-                        'SELECT image.id, name, submittedon ' +
-                        'FROM image ' + 
-                        'LEFT JOIN (SELECT vote.imageid FROM vote WHERE vote.userid = ' + userId + ') v ' + 
-                        'ON image.id = v.imageid ' + 
-                        'WHERE v.imageid IS NULL AND image.userid != ' + userId;*/
 
     logger.log('info', getImagesQuery.toString());
 
@@ -785,8 +779,6 @@ app.post('/signUp', function (request, response) {
                                                 .set('id', facebookId)
                                                 .set('name', name)
                                                 .set('surname', surname)
-                                                //.set('gender', gender)
-                                                //.set('email', email)
                                                 .returning('id');
 
                     if (email) {
