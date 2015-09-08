@@ -246,7 +246,7 @@ app.get('/getNextImage/:userId', function (request, response) {
         response.status(500);
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({"Error message" : "Invalid user id"}));
-        logger.log('error', 'Invalid user id on method ' + request.originalUrl);
+        logger.log('error', 'Invalid user id ' + userId + ' on method ' + request.originalUrl);
         return;
     }
 
@@ -354,7 +354,7 @@ app.post('/getUser', function (request, response) {
         response.status(400);
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({"Error message" : "Invalid userId"}));
-        logger.log('error', 'Invalid user id on ' + request.originalUrl);
+        logger.log('error', 'Invalid user id ' + userId + ' on ' + request.originalUrl);
         return;
     }
 
@@ -644,7 +644,7 @@ app.post('/uploadImage', function (request, response) {
         response.status(400);
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({"Error message" : "Invalid userId"}));
-        logger.log('error', 'Invalid user id on method ' + request.originalUrl);
+        logger.log('error', 'Invalid user id ' + userId + ' on method ' + request.originalUrl);
         return;
     }
 
@@ -731,7 +731,7 @@ app.post('/sendFeedback', function (request, response) {
         response.status(400);
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({"Error message" : "Invalid userId"}));
-        logger.log('error', 'Invalid user id on method ' + request.originalUrl);
+        logger.log('error', 'Invalid user id ' + userId + ' on method ' + request.originalUrl);
         return;
     }
 
