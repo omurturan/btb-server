@@ -266,8 +266,6 @@ app.get('/getNextImage/:userId', function (request, response) {
                             .where("image.userid != " + userId);
 
 
-    logger.log('info', getImagesQuery.toString());
-
     pg.connect(DATABASE_URL, function (err, client, done) {
 
 
@@ -394,6 +392,7 @@ app.post('/getUser', function (request, response) {
                 }
 
                 userJSON = result.rows[0];
+                userJSON['images'] = [];
             }
         });
 
@@ -426,7 +425,8 @@ app.post('/getUser', function (request, response) {
                 return;
             } else {
 
-                userJSON['images'] = result.rows;                
+                userJSON['images'] = result.rows;
+                userJSON['imageCount'] = result.rows.length;                
                 
                 response.setHeader('Content-Type', 'application/json');
                 response.send(userJSON);
