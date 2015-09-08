@@ -714,6 +714,62 @@ app.post('/uploadImage', function (request, response) {
 
 });
 
+app.post('/sendFeedback', function (request, response) {
+
+    logger.log('debug', request.originalUrl);
+
+    // first get the user id
+    var body = request.body;
+    
+    var userId = -1;
+    var imageEncodedString = "";
+    var feedbackBody;
+        
+    if (body.userId && !isNaN(parseInt(body.userId, 10)) ) {
+        userId = body.userId;
+    } else {
+        response.status(400);
+        response.setHeader('Content-Type', 'application/json');
+        response.end(JSON.stringify({"Error message" : "Invalid userId"}));
+        logger.log('error', 'Invalid user id on method ' + request.originalUrl);
+        return;
+    }
+
+    if (body.feedbackBody) {
+        feedbackBody = body.feedbackBody;
+    }
+
+    pg.connect(DATABASE_URL, function (err, client, done) {
+
+        var insertFeedbackQuery = squel.insert()
+                                .into('feedback')
+                                .set('userid', userId)
+                                .set('body', feedbackBody);
+
+        logger.log('info', insertFeedbackQuery.toString());
+
+        client.query(insertFeedbackQuery.toString(), function (error, result) {
+            done();
+            if (error) {
+                console.error(error);
+                response.status(400);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"Error message" : error}));
+                logger.log('error', 'Database Error on ' + request.originalUrl);
+                logger.log('error', error);
+                return;
+            } else {
+                response.status(200);
+                response.setHeader('Content-Type', 'application/json');
+                response.end(JSON.stringify({"message" : "Feedback saved"}));
+                logger.log('info', 'Feedback saved for user ' + userId);
+                return;
+            }
+        });
+    });
+
+});
+
 
 app.post('/signUp', function (request, response) {
 
