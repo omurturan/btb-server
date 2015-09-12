@@ -736,7 +736,7 @@ app.post('/sendFeedback', function (request, response) {
     }
 
     if (body.feedbackBody) {
-        feedbackBody = body.feedbackBody;
+        feedbackBody = body.feedbackBody.trim();
     }
 
     pg.connect(DATABASE_URL, function (err, client, done) {
