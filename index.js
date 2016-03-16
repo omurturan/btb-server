@@ -5,13 +5,14 @@ var fs          = require('fs');
 var bodyParser  = require('body-parser');
 var util        = require('util');
 var winston     = require('winston');
-var squel       = require("squel");
+var squel       = require('squel');
 var CronJob     = require('cron').CronJob;
+var path        = require('path');
 
 squel.useFlavour('postgres');
 
-app.set('port', 5000);
-app.use(express.static(__dirname + '/public'));
+app.set('port', 5500);
+app.use(express.static(path.join(__dirname, '/public')));
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -74,7 +75,7 @@ new CronJob('0 */10 * * * *', function(){
                         ;
 
     var finalQueryString = 'insert into leaguetable (imageid, imagename, ownerid, ownername, ownersurname, likecount, dislikecount, totalvote, score) ' + subquery.toString();
-    
+
 
     pg.connect(DATABASE_URL, function (err, client, done) {
 
@@ -87,7 +88,7 @@ new CronJob('0 */10 * * * *', function(){
                 logger.log('error', 'Database Error on cronjob leaguetable');
                 logger.log('error', err);
                 return;
-            };
+            }
 
             logger.log('info', 'leaguetable deleted');
 
@@ -157,13 +158,13 @@ new CronJob('0 */10 * * * *', function(){
 
                         logger.log('info', 'leaderboard updated');
 
-                    });   
+                    });
 
-                });     
+                });
 
             });
 
-        }); 
+        });
 
     });
 }, null, true, "America/Los_Angeles", this);
@@ -171,39 +172,39 @@ new CronJob('0 */10 * * * *', function(){
 
 var logger = new (winston.Logger)({
     transports: [
-        new (winston.transports.Console)({ 
-            json:  false, 
-            timestamp: true 
+        new (winston.transports.Console)({
+            json:  false,
+            timestamp: true
         }),
-        new (winston.transports.File)({ 
-            name: 'info-file', 
-            filename: __dirname + '/logs/info.log',
+        new (winston.transports.File)({
+            name: 'info-file',
+            filename: path.join(__dirname, '/logs/info.log'),
             level: 'info',
             json: false,
             timestamp: true
         }),
-        new (winston.transports.File)({ 
-            name: 'access-file', 
-            filename: __dirname + '/logs/access.log',
+        new (winston.transports.File)({
+            name: 'access-file',
+            filename: path.join(__dirname, '/logs/access.log'),
             level: 'debug',
             json: false,
             timestamp: true
         }),
-        new (winston.transports.File)({ 
-            name: 'error-file', 
-            filename: __dirname + '/logs/error.log',
+        new (winston.transports.File)({
+            name: 'error-file',
+            filename: path.join(__dirname, '/logs/error.log'),
             level: 'error',
             json: false,
             timestamp: true
         })
     ],
     exceptionHandlers: [
-        new (winston.transports.Console)({ 
-            json: false, 
-            timestamp: true 
+        new (winston.transports.Console)({
+            json: false,
+            timestamp: true
         }),
-        new winston.transports.File({ 
-            filename: __dirname + '/logs/exceptions.log', 
+        new winston.transports.File({
+            filename: path.join(__dirname, '/logs/exceptions.log'),
             json: false,
             timestamp: true
         })
@@ -306,17 +307,17 @@ app.get('/getNextImage/:userId', function (request, response) {
                                         "description" : description
                                         }));
             return;
-            
+
         });
     });
 
 });
 
- 
+
 app.get('/getClients', function (request, response) {
 
     logger.log('debug', request.originalUrl);
-    
+
     pg.connect(DATABASE_URL, function (err, client, done) {
 
         var queryString = squel.select()
@@ -358,7 +359,7 @@ app.post('/getUser', function (request, response) {
         return;
     }
 
-    
+
     pg.connect(DATABASE_URL, function (err, client, done) {
 
         var getUserQueryString = squel.select({ autoQuoteAliasNames: false })
@@ -369,7 +370,7 @@ app.post('/getUser', function (request, response) {
                             .from("client")
                             .where("client.id = " + userId);
 
-        
+
         // get the user info
         client.query(getUserQueryString.toString(), function (err, result) {
             done();
@@ -426,8 +427,8 @@ app.post('/getUser', function (request, response) {
             } else {
 
                 userJSON['images'] = result.rows;
-                userJSON['imageCount'] = result.rows.length;                
-                
+                userJSON['imageCount'] = result.rows.length;
+
                 response.setHeader('Content-Type', 'application/json');
                 response.send(userJSON);
             }
@@ -442,7 +443,7 @@ app.post('/getUser', function (request, response) {
 app.get('/getLeaderboard', function (request, response ) {
 
     logger.log('debug', request.originalUrl);
-    
+
     pg.connect(DATABASE_URL, function (err, client, done) {
 
         var queryString = squel.select({ autoQuoteAliasNames: false })
@@ -476,8 +477,8 @@ app.get('/calculateLeader', function (request, response ) {
 
     logger.log('debug', request.originalUrl);
 
-    var queryString = 'INSERT INTO leader ' + 
-                        '(leaderid, name, surname, imageid, imagename, score, likecount, dislikecount, totalvote) ' + 
+    var queryString = 'INSERT INTO leader ' +
+                        '(leaderid, name, surname, imageid, imagename, score, likecount, dislikecount, totalvote) ' +
                         squel.select({ autoQuoteAliasNames: false })
                             .from('leaderboard')
                             .field('ownerid')
@@ -496,7 +497,7 @@ app.get('/calculateLeader', function (request, response ) {
     logger.log('debug', queryString);
 
     pg.connect(DATABASE_URL, function (err, client, done) {
-    
+
         client.query(queryString, function (error, result) {
             done();
             if (error) {
@@ -523,7 +524,7 @@ app.get('/calculateLeader', function (request, response ) {
 app.get('/getLastLeader', function (request, response ) {
 
     logger.log('debug', request.originalUrl);
-    
+
     pg.connect(DATABASE_URL, function (err, client, done) {
 
         var queryString = squel.select({ autoQuoteAliasNames: false })
@@ -580,7 +581,7 @@ app.post('/vote', function (request, response){
     }
 
 
-    if (userId == -1 || imageId == -1 || vote == -1) {
+    if (userId === -1 || imageId === -1 || vote === -1) {
         response.status(400);
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({"Error message" : "Invalid input value " + errorMessage}));
@@ -599,7 +600,7 @@ app.post('/vote', function (request, response){
 
 /*
                 'INSERT INTO '+
-                    'vote (userid, imageid, votevalue) ' + 
+                    'vote (userid, imageid, votevalue) ' +
                     'VALUES (' + userId +', ' + imageId + ', ' + vote + ')';*/
 
             logger.log('info', insertVoteQuery.toString());
@@ -633,11 +634,11 @@ app.post('/uploadImage', function (request, response) {
 
     // first get the user id
     var body = request.body;
-    
+
     var userId = -1;
     var imageEncodedString = "";
     var imageDesc;
-        
+
     if (body.userId && !isNaN(parseInt(body.userId, 10)) ) {
         userId = body.userId;
     } else {
@@ -720,11 +721,11 @@ app.post('/sendFeedback', function (request, response) {
 
     // first get the user id
     var body = request.body;
-    
+
     var userId = -1;
     var imageEncodedString = "";
     var feedbackBody;
-        
+
     if (body.userId && !isNaN(parseInt(body.userId, 10)) ) {
         userId = body.userId;
     } else {
@@ -829,7 +830,7 @@ app.post('/signUp', function (request, response) {
             } else {
 
                 if (result.rows.length === 0) { //good. user can sign up
-                    
+
                     var insertNewUserQuery = squel.insert()
                                                 .into('client')
                                                 .set('id', facebookId)
@@ -839,11 +840,11 @@ app.post('/signUp', function (request, response) {
 
                     if (email) {
                         insertNewUserQuery.set('email', email);
-                    };
+                    }
 
                     if (gender) {
                         insertNewUserQuery.set('gender', gender);
-                    };
+                    }
 
                     logger.log('info', insertNewUserQuery.toString());
 
